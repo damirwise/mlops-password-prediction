@@ -1,0 +1,45 @@
+name: Train Model
+
+on:
+  workflow_dispatch:
+    inputs:
+      data_url:
+        description: "URL of the training dataset"
+        required: true
+        type: string
+
+jobs:
+  train:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Download training data
+        run: curl -fL "${{ inputs.data_url }}" -o data.csv
+
+      - name: Train and register model
+        env:
+          MLFLOW_TRACKING_URI: ${{ secrets.MLFLOW_TRACKING_URI }}
+          MLFLOW_TRACKING_USERNAME: ${{ secrets.MLFLOW_TRACKING_USERNAME }}
+          MLFLOW_TRACKING_PASSWORD: ${{ secrets.MLFLOW_TRACKING_PASSWORD }}
+        run: python train.py data.csv
+
+      - name: Reload production model
+        if: ${{ vars.DEPLOY_ENABLED == 'true' }}
+        env:
+          RELOAD_MODEL_URL: ${{ secrets.RELOAD_MODEL_URL }}
+          MODEL_ADMIN_API_KEY: ${{ secrets.MODEL_ADMIN_API_KEY }}
+        run: |
+          curl -f -X POST \
+            -H "Authorization: Bearer $MODEL_ADMIN_API_KEY" \
+            "$RELOAD_MODEL_URL"

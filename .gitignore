@@ -1,0 +1,22 @@
+# Python
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+
+# Tests / linters
+.pytest_cache/
+.ruff_cache/
+
+# Local MLflow data
+mlruns/
+
+# Secrets
+.env
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+~*
